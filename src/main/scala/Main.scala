@@ -1,6 +1,7 @@
 package com.demo.rps
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 
 object Main extends App {
   printInScreen()
@@ -31,13 +32,13 @@ private def printInScreen(countUser: Int = 0, countPC: Int = 0): Unit = {
   )
 
   val input: String = scala.io.StdIn.readLine
-  val canContinue: Option[(Boolean, Boolean, Boolean | Unit)] = userInput(input)
+  val canContinue: Option[ListBuffer[Boolean]] = userInput(input)
 
   canContinue match {
-    case Some((continue, isException, isWinner: Boolean))
+    case Some(ListBuffer(continue, isException, isWinner))
       if continue && isWinner && !isException =>
       printInScreen(countUser + 1, countPC)
-    case Some((continue, isException, isWinner: Boolean))
+    case Some(ListBuffer(continue, isException, isWinner))
       if continue && !isWinner && !isException =>
       printInScreen(countUser, countPC + 1)
     case Some(_) => printInScreen(countUser, countPC)
@@ -45,7 +46,7 @@ private def printInScreen(countUser: Int = 0, countPC: Int = 0): Unit = {
   }
 }
 
-def userInput(user: String): Option[(Boolean, Boolean, Boolean | Unit)] = {
+private def userInput(user: String): Option[ListBuffer[Boolean]] = {
   try {
     val input: Int = user.toInt
 
@@ -56,18 +57,28 @@ def userInput(user: String): Option[(Boolean, Boolean, Boolean | Unit)] = {
         println(s"${Console.CYAN}Exited from game ${Console.RESET}")
         None
       case 1 | 2 | 3 =>
-        val result  = pcPlayer.giveResult(input) match {
-          case Some(result) => result
+        val result: Option[Boolean] = pcPlayer.giveResult(input)
+        val analysisResults: ListBuffer[Boolean] = ListBuffer(true, false)
+
+        result match {
+          case Some(true) =>
+            println(s"${Console.GREEN}You win!${Console.RESET}")
+            analysisResults.addOne(true)
+          case Some(false) =>
+            println(s"${Console.MAGENTA}You lose!${Console.RESET}")
+            analysisResults.addOne(false)
           case None =>
+            println(s"${Console.YELLOW}It's a draw!${Console.RESET}")
         }
-        Some((true, false, result))
+
+        Some(analysisResults)
       case _ =>
         println(s"${Console.YELLOW}Please enter a valid option${Console.RESET}")
-        Some((false, false, false))
+        Some(ListBuffer(false, false, false))
     }
   } catch
     case e: NumberFormatException =>
       println(s"${Console.RED}Enter a valid number${Console.RESET}")
-      Some(true, true, false)
+      Some(ListBuffer(true, true, false))
 }
 
